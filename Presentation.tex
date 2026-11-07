@@ -7,14 +7,14 @@
 \input{shared-table-preamble}
 
 
-% Maximum figure height for all slides — change this one value to rescale every image
+% Maximum figure height for all slides.
 \newlength{\maxfigheight}
 \setlength{\maxfigheight}{0.3\textheight}
 
-% Combined (Author, year) [#] for picture/text citations; tables use plain \cite{}
+% Combined author-year and numbered citation for slide references.
 \newcommand{\slideref}[1]{(\citeauthor{#1}, \citeyear{#1})~\cite{#1}}
 
-% Visual separator for each PowerPoint slide section
+% Visual separator for each slide section.
 \newcounter{slide}
 \newcommand{\slidesection}[1]{%
   \clearpage
@@ -30,27 +30,7 @@
 % ── Slides (in presentation order) ──────────────────────────────────────────
 % Updated by sync_slide_order.py — do not edit this block manually.
 \setcounter{slide}{1}
-\input{slides/An unfilled protein sensing niche.tex}
-\setcounter{slide}{2}
-\input{slides/A modular nanopore protein sensing platform.tex}
-\setcounter{slide}{5}
-\input{slides/Nanopore Surface Coatings.tex}
-\setcounter{slide}{7}
-\input{slides/Polyurea.tex}
-\setcounter{slide}{8}
-\input{slides/Polyurea MLD Chemistries.tex}
-\setcounter{slide}{10}
-\input{slides/Spectroscopic Ellipsometry (SE).tex}
-\setcounter{slide}{13}
-\input{slides/Fourier Transform Infrared Spectroscopy (FTIR).tex}
-\setcounter{slide}{15}
-\input{slides/X-Ray Photoelectron Spectroscopy (XPS).tex}
-\setcounter{slide}{19}
-\input{slides/Streaming Potential.tex}
-\setcounter{slide}{21}
-\input{slides/Ion current rectification (geometric asymmetry).tex}
-\setcounter{slide}{46}
-\input{slides/Commercial nanopore technology.tex}
+\input{slides/Example slide.tex}
 % ── Bibliography ─────────────────────────────────────────────────────────────
 \clearpage
 \listoffigures

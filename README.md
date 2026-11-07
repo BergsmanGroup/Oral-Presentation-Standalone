@@ -1,40 +1,30 @@
 # Oral Presentation Resource Generator
 
-This folder is a standalone package for generating citation-audited LaTeX
-resources used by the oral presentation. It does not depend on the parent
-dissertation repository and can be copied into its own Git repository.
+A small starter project for building a citation-audited LaTeX companion to a
+PowerPoint presentation. The repository includes a sample slide and bibliography
+entry; replace them with your own content.
 
-PowerPoint remains the presentation editor. LaTeX provides the citation audit
-PDF and table/figure resource exports, while Python orchestrates the build.
+## Project files
 
-## Contents
-
-- `Presentation.tex` - master citation-audit document and slide order.
-- `slides/` - one LaTeX source file per slide with citations.
-- `assets/tables/` - standalone table wrappers exported to SVG.
-- `assets/figures/` - source figures used by the citation audit.
-- `source/Figures/` - copied source fragments needed by presentation tables.
-- `references.bib` - local bibliography used by the presentation.
-- `shared-table-preamble.tex` - local table formatting support.
-- `build_presentation.py` - reproducible build pipeline.
-- `sync_slide_order.py` - optionally synchronizes slide order from the PowerPoint.
-- `build/` - generated intermediate files and the citation audit PDF.
-- `exported/` - generated or presentation-ready resource exports.
-
-The PowerPoint files are included for slide-order synchronization and
-presentation editing, but the LaTeX build does not modify them.
+- `Presentation.tex` - document setup, slide order, and bibliography.
+- `slides/` - one LaTeX source file per slide.
+- `references.bib` - BibTeX references used by the slides.
+- `shared-table-preamble.tex` - packages and helpers for standalone table assets.
+- `build_presentation.py` - builds the citation-audit PDF and optional exports.
+- `sync_slide_order.py` - optionally orders slides from a PowerPoint deck.
+- `build/` and `exported/` - generated files; do not edit these directly.
 
 ## Requirements
 
 - Python 3.10 or newer
-- `python-pptx` when using `--reorder`
-- A TeX distribution providing `pdflatex`, `latex`, `bibtex`, `dvipdfmx`,
-  and `dvisvgm` on `PATH`. The build script checks for all five tools when it
-  starts, including for `--help` and PDF-only builds.
-- `rsvg-convert` is optional and is only needed to convert SVG figures to PDF
+- Python dependencies from `requirements.txt`
+- A TeX distribution providing `pdflatex`, `latex`, `bibtex`, `dvipdfmx`, and
+  `dvisvgm`
+- `python-pptx` and a PowerPoint file named
+  `Oral Presentation with macro WORKING COPY.pptm` only when using `--reorder`
+- `rsvg-convert` is optional and is used to convert SVG figures to PDF
 
-The dependency manifest is `requirements.txt`. Create or update the local
-virtual environment and install the dependencies with:
+Create a virtual environment and install the Python dependencies:
 
 ```powershell
 python -m venv .venv
@@ -42,105 +32,39 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-If the environment already exists, rerun only the activation and
-`pip install` commands to update it. PowerShell execution-policy settings may
-require activating the environment through
-`.\.venv\Scripts\python.exe` instead of `Activate.ps1`.
-
-Verify that the external tools are discoverable before building:
-
-```powershell
-Get-Command python, pdflatex, latex, bibtex, dvipdfmx, dvisvgm
-python -m pip check
-```
-
-The scripts use the files relative to their own directory, so commands should
-be run from this folder. Paths containing spaces are supported by the scripts,
-but the PowerPoint filename used by `--reorder` is currently fixed to
-`Oral Presentation with macro WORKING COPY.pptm`.
-
 ## Build
 
-Run from this folder:
+Run from the repository root:
 
 ```powershell
 python build_presentation.py
 ```
 
-Useful options:
+Optional outputs:
 
 ```powershell
 python build_presentation.py --html
 python build_presentation.py --export_tables
-python build_presentation.py --reorder --html --export_tables
 ```
 
-The normal workflow is:
+To synchronize slide order, put a PowerPoint deck at the filename above, ensure
+its slide titles match the corresponding `.tex` filenames in `slides/`, then run:
 
-1. Edit the PowerPoint deck and save it as
-   `Oral Presentation with macro WORKING COPY.pptm`.
-2. Run `python build_presentation.py --reorder` to synchronize the
-   `\input{...}` order in `Presentation.tex` from the deck.
-3. Review any unmatched-title warnings printed by the command and in
-   `build/slide-matching.log`.
-4. Run `python build_presentation.py` to generate the citation-audit PDF.
-5. Add `--html` for the browser-based citation companion, or
-   `--export_tables` to compile the standalone table assets to PDF and SVG.
+```powershell
+python build_presentation.py --reorder
+```
 
-`--reorder` edits `Presentation.tex`; do not use it as a read-only check.
-Only slides whose PowerPoint title matches a `.tex` filename in `slides/` are
-included. Missing or renamed titles are skipped and reported rather than
-automatically repaired.
+The script updates the slide-input block in `Presentation.tex`; unmatched titles
+are reported and skipped. The default build creates a PDF in `build/`. Optional
+table exports go in `exported/`.
 
-The build assigns citation numbers by first appearance across the slide order.
-The audit PDF is written to `build/Presentation.pdf`; table SVGs are written
-to `exported/` when `--export_tables` is supplied. Table assets are rebuilt
-only when their source, included fragments, shared preamble, or citation-label
-file is newer than the existing PDF/SVG outputs. SVG figures are converted to
-PDFs when they are stale and `rsvg-convert` is available; otherwise the build
-continues with a warning and LaTeX may use an existing PDF or fail if one is
-absent. When refreshed table assets affect the master PDF, the master is
-rebuilt once after those assets are updated.
+## Add your content
 
-To add a slide, create `slides/<slide-title>.tex` and add its input to
-`Presentation.tex`, or use `--reorder` after saving the matching PowerPoint
-file. To add a presentation-only table, create a wrapper in
-`assets/tables/` and reference `shared-table-preamble.tex` plus any local
-source fragments.
+1. Copy `slides/Example slide.tex` and rename the copy to match a slide title.
+2. Add the new slide's `\input{slides/...}` line to `Presentation.tex`.
+3. Add bibliography records to `references.bib` and cite them with `\slideref{key}`.
+4. Put any figures in `assets/figures/`; use PDF or a format supported by your TeX
+   distribution. SVG figures are converted when `rsvg-convert` is available.
+5. To export a standalone table, add a `.tex` wrapper under `assets/tables/`.
 
-## Output and editing rules
-
-The PowerPoint deck is the presentation source of truth. The LaTeX project is
-the citation-audit and resource-export pipeline; it does not update the
-PowerPoint file. Edit source files under `slides/`, `assets/`, `source/`,
-`references.bib`, and `Presentation.tex`, then rebuild.
-
-The build reuses unchanged files already in `build/` and `exported/`, but it
-does not provide a destructive clean command. If an output is stale or a
-citation/figure appears wrong, remove the specific generated output or the
-relevant generated directory and rebuild. Do not edit generated files
-directly.
-
-## Generated files
-
-Do not edit files generated by the build:
-
-- `build/`
-- generated PDFs and SVGs in `exported/` (the directory also contains
-  presentation resources that may be maintained separately)
-
-The source bibliography and table fragment are intentionally copied into this
-package so it remains independent of the dissertation repository.
-
-## Known limitations
-
-- The build has no pinned Python or TeX versions and no automated test or CI
-  configuration. Reproducibility therefore depends on the local installations
-  and their versions.
-- The five TeX executables are mandatory at script startup, even when a
-  requested operation would not use every executable.
-- `--reorder` relies on exact, normalized title-to-filename matching and can
-  silently omit a slide from `Presentation.tex` except for its warning output.
-- Generated artifacts are ignored by Git, but obsolete outputs are not
-  automatically removed when a source asset is renamed or deleted. A fully
-  clean rebuild still requires manual cleanup of the relevant generated files.
+Generated files and local environments are excluded by `.gitignore`.

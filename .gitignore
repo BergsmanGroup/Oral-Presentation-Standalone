@@ -19,3 +19,10 @@ build/*
 
 # Local Python environment
 .venv/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+
+# Generated resource exports
+exported/*
