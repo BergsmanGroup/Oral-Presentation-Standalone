@@ -1,0 +1,34 @@
+\documentclass[border=2pt]{standalone}
+
+\usepackage[T1]{fontenc}
+\usepackage[super,sort&compress]{natbib}
+\input{shared-table-preamble}
+
+% standalone class does not support floats; wrap table in a minipage instead
+\makeatletter
+\renewenvironment{table}[1][]{%
+    \begin{minipage}{\textwidth}\centering
+    \def\@captype{table}%
+}{%
+    \end{minipage}%
+}
+\makeatother
+
+\begin{document}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lccc}
+\hline
+\textbf{Type} & \textbf{pH} & \textbf{Calculated diameter (nm)} & \textbf{Surface charge} \\
+\hline
+$SiN_x^*$ & 7.0 & 15 & Negative \\
+$HfO_2$ & 4.5 & 3.8 & Positive \\
+$HfO_2$ & 7.0 & 6.3 & Positive \\
+$HfO_2$ & 9.5 & 7.7--8.9 & Negative \\
+\hline
+\multicolumn{4}{l}{\footnotesize $^{*}$Nominal/typical measurement} \\
+\end{tabular}
+\end{table}
+
+\end{document}

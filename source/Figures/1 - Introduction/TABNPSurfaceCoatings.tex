@@ -1,0 +1,79 @@
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{2}
+
+\caption{Comparison of common nanopore surface modification strategies. Adapted from Eggenberger \emph{et al.}\cite{Eggenberger2019} and modified for the design requirements considered in this dissertation.}
+\label{tab:SurfaceModificationComparison}
+
+\begin{tabular}{lcccccc}
+\toprule
+\makecell[l]{Method} &
+\makecell[c]{Phase} &
+\makecell[c]{Surface\\bonding} &
+\makecell[c]{Positive at\\neutral pH} &
+\makecell[c]{Diameter\\control} &
+\makecell[c]{Organic\\functionality} \\
+\midrule
+
+Fluid lipid coatings\cite{Yusko2011,Yusko2017,Eggenberger2019b} &
+L/C &
+Noncovalent &
+\Yes &
+\No &
+\No \\
+
+Surfactants\cite{xie2009,gangula2010} &
+L/C &
+Noncovalent &
+\Yes &
+\No &
+\YesM \\
+
+Polyelectrolyte coatings\cite{alem2007,ali2010,lepoitevin2016,ma2018,umehara2006} &
+L &
+Noncovalent &
+\YesP &
+\Yes &
+\YesM \\
+
+Self-assembled monolayers\cite{wanunu2007,nilsson2006,anderson2013,ananth2018,Sypabekova2023,ulman1996} &
+L/V &
+Covalent$^{*}$ &
+\YesM &
+\No &
+\Yes \\
+
+ALD &
+V &
+Covalent &
+\YesM &
+\YesP &
+\No \\
+
+MLD &
+V &
+Covalent &
+\No &
+\YesP &
+\Yes \\
+
+\bottomrule
+\end{tabular}
+
+\vspace{0.5em}
+
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+\textbf{Phase:} L = liquid phase, V = vapor phase, C = colloid.
+\\
+%\textbf{Covalent:} \Yes = covalently bonded, N = non-covalent.
+%\\
+\textbf{Scoring:} \textbf{Y$^+$}: excellent or plentiful; \textbf{\Yes}: at least some suitable options; \textbf{Y$^-$}: difficult, uncommon, 
+or dubiously suitable; \textbf{N}: nominally impossible or unsuitable for hybrid nanopore formation
+\\
+$^{*}$Acid-base condensation (as in silanization) is considered a covalent bond, but thiol-on-gold SAMs may be considered noncovalent depending on the environment.
+\end{minipage}
+\renewcommand{\arraystretch}{1.0}
+
+\end{table}

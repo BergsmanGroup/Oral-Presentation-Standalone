@@ -1,0 +1,83 @@
+\documentclass[border=2pt]{standalone}
+
+\usepackage[T1]{fontenc}
+\usepackage[super,sort&compress]{natbib}
+\input{shared-table-preamble}
+
+% standalone class does not support floats; wrap table in a minipage instead
+\makeatletter
+\renewenvironment{table}[1][]{%
+    \begin{minipage}{\textwidth}\centering
+    \def\@captype{table}%
+}{%
+    \end{minipage}%
+}
+\makeatother
+
+\begin{document}
+
+% Inject global citation numbers established by the master presentation build.
+% Without this file the SVG will contain [?] placeholders; run
+% build_presentation.py to generate it.
+\InputIfFileExists{build/global-bib-labels.tex}{}{}
+
+\begin{table}[htbp]
+\centering
+\caption{Normalized high-resolution XPS peak ratios. Peak areas are normalized to the neutral nitrogen (400.0 eV) component. The C$_6$ carbon is constrained to represent the C$_6$ carbon of the aromatic ring, as was done in Appendix~\ref{app:TDICED_FTIR}\cite{werner2026}}
+\label{tab:XPSHiRes}
+
+\renewcommand{\arraystretch}{1.25}
+
+\begin{tabular}{lcccccc}
+\toprule
+&
+\multicolumn{2}{c}{Nitrogen} &
+\multicolumn{4}{c}{Carbon} \\
+\cmidrule(lr){2-3}
+\cmidrule(lr){4-7}
+
+Sample &
+$\mathrm{N^+}$ &
+$\mathrm{N^0}$ &
+C=O &
+C--O/N &
+C$_6$ &
+C--C \\
+\midrule
+
+MeI/ACN treated &
+\textbf{0.23} &
+1.00 &
+1.00 &
+2.75 &
+0.40 &
+2.53 \\
+
+Untreated &
+0.05 &
+1.00 &
+1.00 &
+\textbf{2.04} &
+0.40 &
+2.90 \\
+
+Untreated theoretical &
+0.00 &
+1.00 &
+1.00 &
+3.25 &
+0.50 &
+3.25 \\
+
+$[(\mathrm{R_3NMe^+})_2]\mathrm{CO_3}$ theoretical &
+\textbf{0.25} &
+1.00 &
+1.00 &
+2.60 &
+0.40 &
+2.60 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

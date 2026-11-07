@@ -1,0 +1,16 @@
+% Shared table packages and scoring commands.
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{threeparttable}
+\usepackage{makecell}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{float}
+
+\newcommand{\YNcell}[1]{\makebox[1em][c]{#1}}
+\newcommand{\YNSup}[2]{\makebox[1em][c]{#1\rlap{$^{#2}$}}}
+\newcommand{\Yes}{\YNcell{Y}}
+\newcommand{\YesP}{\YNSup{Y}{+}}
+\newcommand{\YesM}{\YNSup{Y}{-}}
+\newcommand{\No}{\YNcell{N}}
