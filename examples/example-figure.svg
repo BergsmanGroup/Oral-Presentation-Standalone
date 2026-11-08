@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="180" viewBox="0 0 720 180">
+  <rect width="720" height="180" fill="#ffffff"/>
+  <g fill="#e8f0fe" stroke="#2457a7" stroke-width="2">
+    <rect x="20" y="45" width="180" height="90" rx="12"/>
+    <rect x="270" y="45" width="180" height="90" rx="12"/>
+    <rect x="520" y="45" width="180" height="90" rx="12"/>
+  </g>
+  <g stroke="#2457a7" stroke-width="3" fill="none">
+    <path d="M210 90 H255 M245 80 L255 90 L245 100"/>
+    <path d="M460 90 H505 M495 80 L505 90 L495 100"/>
+  </g>
+  <g font-family="sans-serif" font-size="22" text-anchor="middle" fill="#183153">
+    <text x="110" y="98">Source SVG</text>
+    <text x="360" y="98">PDF conversion</text>
+    <text x="610" y="98">LaTeX slide</text>
+  </g>
+</svg>

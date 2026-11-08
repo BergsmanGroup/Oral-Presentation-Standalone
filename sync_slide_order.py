@@ -33,7 +33,7 @@ PRES_DIR   = Path(__file__).resolve().parent
 SLIDES_DIR = PRES_DIR / "slides"
 BUILD_DIR  = PRES_DIR / "build"
 MASTER_TEX = PRES_DIR / "Presentation.tex"
-PPTX_FILE  = PRES_DIR / "Oral Presentation with macro WORKING COPY.pptm"
+PPTX_FILE  = PRES_DIR / "AVS 72 2026 WORKING COPY.pptm"
 SLIDE_MATCH_LOG = BUILD_DIR / "slide-matching.log"
 
 # Delimit the \\input block inside Presentation.tex.

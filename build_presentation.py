@@ -7,6 +7,7 @@ Usage:
     python build_presentation.py                          # PDF only (fast)
     python build_presentation.py --html                   # + citations.html
     python build_presentation.py --export_tables           # + table SVGs
+    python build_presentation.py --examples                # + example slide/assets
     python build_presentation.py --reorder                # sync slide order first
     python build_presentation.py --reorder --html --export_tables  # full build
 
@@ -42,7 +43,7 @@ from urllib.parse import quote as _url_quote
 # - Paths -
 
 PRES_DIR = Path(__file__).resolve().parent          # standalone package root
-PROJECT_ROOT = PRES_DIR                             # all package dependencies are local
+EXAMPLE_DIR = PRES_DIR / "examples"
 BUILD_DIR = PRES_DIR / "build"
 EXPORT_DIR = PRES_DIR / "exported"
 MASTER_TEX = PRES_DIR / "Presentation.tex"
@@ -137,16 +138,21 @@ def _run(cmd: list[str], cwd: Path, label: str, warn_codes: tuple[int, ...] = ()
 
 # - Master build -
 
-def build_master() -> None:
+def build_master(examples: bool = False) -> None:
     """Run latex - bibtex - latex - latex on presentation.tex."""
     BUILD_DIR.mkdir(exist_ok=True)
 
     master_rel = MASTER_TEX.relative_to(PRES_DIR).as_posix()
+    if examples:
+        master_rel = rf"\def\BuildExamples{{1}}\input{{{master_rel}}}"
     outdir_flag = f"-output-directory={BUILD_DIR.relative_to(PRES_DIR).as_posix()}"
+    jobname_flag = "-jobname=Presentation"
+    # A previous example build must not leak its bibliography into a normal build.
+    (BUILD_DIR / "presentation.bbl").unlink(missing_ok=True)
 
     print("\n- Pass 1: pdflatex (citation discovery) -")
     _run(
-        [PDFLATEX, *LATEX_FLAGS, "-draftmode", outdir_flag, master_rel],
+        [PDFLATEX, *LATEX_FLAGS, "-draftmode", outdir_flag, jobname_flag, master_rel],
         cwd=PRES_DIR,
         label="pdflatex pass 1",
     )
@@ -156,23 +162,27 @@ def build_master() -> None:
     # Running from PRES_DIR so that the local references.bib resolves correctly.
     # warn_codes=(2,): exit 2 means recoverable errors (e.g. duplicate bib keys);
     # bibtex still produces a usable .bbl in that case.
-    _run(
-        [BIBTEX, MASTER_JOB.relative_to(PRES_DIR).as_posix()],
-        cwd=PRES_DIR,
-        label="bibtex",
-        warn_codes=(2,),
-    )
+    aux_text = (BUILD_DIR / "presentation.aux").read_text(encoding="utf-8")
+    if r"\citation{" in aux_text:
+        _run(
+            [BIBTEX, MASTER_JOB.relative_to(PRES_DIR).as_posix()],
+            cwd=PRES_DIR,
+            label="bibtex",
+            warn_codes=(2,),
+        )
+    else:
+        print("  No citations in this build; skipping BibTeX.")
 
     print("\n- Pass 2: pdflatex (process .bbl) -")
     _run(
-        [PDFLATEX, *LATEX_FLAGS, "-draftmode", outdir_flag, master_rel],
+        [PDFLATEX, *LATEX_FLAGS, "-draftmode", outdir_flag, jobname_flag, master_rel],
         cwd=PRES_DIR,
         label="pdflatex pass 2",
     )
 
     print("\n- Pass 3: pdflatex (resolve cross-references) -")
     _run(
-        [PDFLATEX, *LATEX_FLAGS, outdir_flag, master_rel],
+        [PDFLATEX, *LATEX_FLAGS, outdir_flag, jobname_flag, master_rel],
         cwd=PRES_DIR,
         label="pdflatex pass 3",
     )
@@ -206,11 +216,6 @@ def extract_global_labels() -> int:
 
     n = len(lines)
     print(f"\n- Extracted {n} citation label(s) - {GLOBAL_LABELS.relative_to(PRES_DIR)}")
-    if n == 0:
-        print(
-            "  WARNING: no \\bibcite entries found.  Citation numbers in SVGs\n"
-            "  will appear as [?] until the master build succeeds with BibTeX."
-        )
     return n
 
 
@@ -225,10 +230,16 @@ def find_assets() -> list[Path]:
     return assets
 
 
-def _asset_dependencies(tex_path: Path, seen: set[Path] | None = None) -> set[Path]:
+def _asset_dependencies(
+    tex_path: Path,
+    seen: set[Path] | None = None,
+    excluded: Path | None = None,
+) -> set[Path]:
     """Return source files that can affect a standalone asset."""
     seen = set() if seen is None else seen
     tex_path = tex_path.resolve()
+    if excluded is not None and excluded in tex_path.parents:
+        return seen
     if tex_path in seen or not tex_path.exists():
         return seen
     seen.add(tex_path)
@@ -239,7 +250,7 @@ def _asset_dependencies(tex_path: Path, seen: set[Path] | None = None) -> set[Pa
         candidate = (PRES_DIR / raw).resolve()
         if not candidate.exists():
             candidate = candidate.with_suffix(".tex")
-        _asset_dependencies(candidate, seen)
+        _asset_dependencies(candidate, seen, excluded)
 
     if r"\cite" in text:
         bibliography = PRES_DIR / "references.bib"
@@ -329,101 +340,65 @@ def build_asset_svg(tex_path: Path) -> Path:
 
 # -- SVG figure conversion ---------------------------------------------------
 
+def convert_svg(source: Path, output: Path) -> None:
+    """Convert an SVG to PDF when its output is missing or stale."""
+    if output.exists() and output.stat().st_mtime_ns >= source.stat().st_mtime_ns:
+        return
+    converter = shutil.which("rsvg-convert")
+    if converter is None:
+        sys.exit("ERROR: rsvg-convert is required to build SVG figures. Install it and add it to PATH.")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    _run(
+        [converter, "--format=pdf", "--background-color=white", "--output", str(output), str(source)],
+        cwd=PRES_DIR,
+        label=f"SVG to PDF: {source.name}",
+    )
+
+
+def prepare_examples() -> Path:
+    """Build the opt-in SVG figure and Python-generated table."""
+    from examples.build_table import build_table
+
+    source = EXAMPLE_DIR / "example-figure.svg"
+    convert_svg(source, EXPORT_DIR / "example-figure.pdf")
+    shutil.copyfile(source, EXPORT_DIR / source.name)
+    return build_table(BUILD_DIR / "examples")
+
+
 def convert_svg_figures() -> None:
-    """Convert stale SVGs in assets/figures/ to PDF using the shared rsvg-convert pipeline."""
+    """Convert user SVG figures without scanning opt-in examples."""
     figures_dir = PRES_DIR / "assets" / "figures"
-    if not figures_dir.exists() or not any(figures_dir.glob("*.svg")):
-        return
-
-    sys.path.insert(0, str(PROJECT_ROOT / ".vscode"))
-    try:
-        from latex_build_tools.preflight import convert_stale_svgs
-    except ImportError as exc:
-        print(f"  WARNING: shared preflight module not importable ({exc}); SVG\u2192PDF skipped.")
-        return
-
-    print("\n- Converting SVG figures to PDF -")
-    # Pass a sentinel whose parent is figures_dir so only that subtree is searched.
-    result = convert_stale_svgs(figures_dir / "_")
-
-    if not result.get("rsvg_convert_available"):
-        print("  WARNING: rsvg-convert not found; SVG\u2192PDF conversion skipped.")
-        return
-    for rel in result.get("conversions", []):
-        print(f"  SVG\u2192PDF: {rel}")
-    for rel in result.get("failures", []):
-        print(f"  FAILED:   {rel}")
+    for source in sorted(figures_dir.glob("*.svg")):
+        convert_svg(source, source.with_suffix(".pdf"))
 
 
 # -- Preflight ----------------------------------------------------------------
 
-def run_preflight() -> None:
-    """
-    Run citation and bibliography checks before building.
-
-    Delegates duplicate-key and capitalisation detection to the local
-    .vscode/latex_build_tools/preflight module, which covers all package
-    TeX files including presentation slides.
-
-    Additionally validates \\slideref{} keys, which the shared CITE_COMMAND_PATTERN
-    does not cover.
-
-    Exits non-zero if any undefined citation keys are found.
-    """
-    sys.path.insert(0, str(PROJECT_ROOT / ".vscode"))
-
-    try:
-        from latex_build_tools.preflight import (
-            normalize_citation_key_capitalization,
-            scan_bibliography_preflight,
-        )
-        from latex_build_tools.common import (
-            gather_bibliography_files,
-            parse_bibliography_entries,
-        )
-    except ImportError as exc:
-        print(f"  WARNING: preflight module not importable ({exc}); skipping.")
-        return
-
-    main_doc = PROJECT_ROOT / "Presentation.tex"
-    if not main_doc.exists():
-        print("  WARNING: Presentation.tex not found; skipping preflight.")
-        return
-
-    print("\n" + "-" * 60)
-    print("Preflight")
-
-    # Auto-fix unambiguous first-letter capitalisation mismatches in all .tex files.
-    # Covers \cite{} family; \slideref{} mismatches are reported separately below.
-    fixes = normalize_citation_key_capitalization(main_doc)
-    for fix in fixes:
-        print(f"  AUTO-FIXED: {fix}")
-
-    result = scan_bibliography_preflight(main_doc)
-
+def run_preflight(examples: bool = False) -> None:
+    """Validate citations in active sources without depending on editor helpers."""
+    print("\n- Citation preflight -")
     blockers: list[str] = []
     warnings: list[str] = []
-
-    # Duplicate bib keys - warning only; bibtex step uses warn_codes to survive them
-    for dup in result["duplicate_bibliography_keys"]:
-        warnings.append(
-            f"Duplicate bib key '{dup['key']}' "
-            f"(variants: {', '.join(dup['variants'])})"
-        )
-
-    # Remaining capitalisation mismatches that couldn't be auto-fixed
-    for mismatch in result["capitalization_mismatches"]:
-        warnings.append(f"Cite key capitalisation: {mismatch}")
-
-    # Build casefold map of all known bib keys for undefined-key detection
-    bib_keys: dict[str, str] = {}  # casefold -> canonical
-    for bib_path in gather_bibliography_files(main_doc):
-        for key in parse_bibliography_entries(bib_path):
+    bib_keys: dict[str, str] = {}
+    bib_paths = [PRES_DIR / "references.bib"]
+    if examples:
+        bib_paths.append(EXAMPLE_DIR / "references.bib")
+    for bib_path in bib_paths:
+        text = bib_path.read_text(encoding="utf-8")
+        for match in re.finditer(r"^\s*@(?!(?:comment|string|preamble)\b)\w+\s*[{(]\s*([^,\s]+)\s*,", text, re.I | re.M):
+            key = match.group(1)
+            if key.casefold() in bib_keys:
+                warnings.append(f"{bib_path.name}: duplicate bibliography key '{key}'")
             bib_keys.setdefault(key.casefold(), key)
 
-    # Scan all presentation .tex files for every \cite / \slideref key
-    for tex_path in sorted(PRES_DIR.rglob("*.tex")):
-        if "build" in tex_path.parts:
+    roots = [MASTER_TEX, *_slide_inputs(MASTER_TEX), *find_assets()]
+    if examples:
+        roots.append(EXAMPLE_DIR / "Example slide.tex")
+    sources: set[Path] = set()
+    for root in roots:
+        sources.update(_asset_dependencies(root, excluded=None if examples else EXAMPLE_DIR))
+    for tex_path in sorted(sources):
+        if tex_path.suffix != ".tex" or (not examples and EXAMPLE_DIR in tex_path.parents):
             continue
         text = tex_path.read_text(encoding="utf-8", errors="replace")
         rel = tex_path.relative_to(PRES_DIR)
@@ -446,7 +421,7 @@ def run_preflight() -> None:
         print(f"  WARN:  {w}")
     for b in blockers:
         print(f"  BLOCK: {b}")
-    if not warnings and not blockers and not fixes:
+    if not warnings and not blockers:
         print("  OK")
 
     if blockers:
@@ -492,7 +467,7 @@ def _powerpoint_slide_numbers() -> dict[str, int]:
         from pptx import Presentation
     except ImportError:
         return {}
-    pptx_path = PRES_DIR / "Oral Presentation with macro WORKING COPY.pptm"
+    pptx_path = PRES_DIR / "AVS 72 2026 WORKING COPY.pptm"
     if not pptx_path.exists():
         return {}
 
@@ -606,7 +581,7 @@ _HTML_TEMPLATE = """\
   ul    {{ list-style: none; padding: 0; }}
   li    {{ display: flex; align-items: center; gap: .75rem; margin: .6rem 0; }}
   .ref  {{ flex: 1; }}
-  img.ref-img {{ height: 70px; width: auto; border: 1px solid #ddd; border-radius: 2px; flex-shrink: 0; }}
+  img.ref-img {{ height: 180px; width: auto; border: 1px solid #ddd; border-radius: 2px; flex-shrink: 0; }}
   button {{
     font-size: .75rem; padding: .15rem .5rem; cursor: pointer;
     border: 1px solid #888; border-radius: 3px; background: #f5f5f5;
@@ -707,7 +682,7 @@ def _html_asset(filename: str) -> tuple[str, str]:
     return image_dir + _url_quote(image_name, safe=""), alt_text
 
 
-def generate_citations_html() -> Path:
+def generate_citations_html(examples: bool = False) -> Path:
     """Generate build/citations.html with per-slide copy buttons for each \\slideref."""
     out_path = BUILD_DIR / "citations.html"
     if not GLOBAL_LABELS.exists():
@@ -716,6 +691,8 @@ def generate_citations_html() -> Path:
 
     labels = _parse_labels(GLOBAL_LABELS)
     slides = _slide_inputs(MASTER_TEX)
+    if examples:
+        slides.insert(0, EXAMPLE_DIR / "Example slide.tex")
     powerpoint_numbers = _powerpoint_slide_numbers()
 
     sections: list[str] = []
@@ -748,6 +725,8 @@ def generate_citations_html() -> Path:
             stem = input_path.stem
             for suffix in (".svg", ".pdf"):
                 asset = EXPORT_DIR / f"{stem}{suffix}"
+                if not asset.exists() and stem.endswith("-content"):
+                    asset = EXPORT_DIR / f"{stem[:-len('-content')]}{suffix}"
                 if asset.exists():
                     src, alt_text = _html_asset(asset.name)
                     items.append(_OBJECT_HTML.format(
@@ -803,6 +782,10 @@ def main() -> None:
         "--export_tables", action="store_true",
         help="Build stale table assets and export PDFs/SVGs to exported/.",
     )
+    parser.add_argument(
+        "--examples", action="store_true",
+        help="Include the example slide, SVG figure, and Python-generated table.",
+    )
     args = parser.parse_args()
 
     print("=" * 60)
@@ -811,8 +794,6 @@ def main() -> None:
     print(f"  Build dir        : {BUILD_DIR}")
     print(f"  Export dir       : {EXPORT_DIR}")
     print("=" * 60)
-
-    run_preflight()
 
     # Warn about .tex files that had no matching PowerPoint slide on last sync.
     if SLIDE_MATCH_LOG.exists():
@@ -834,10 +815,16 @@ def main() -> None:
             check=True,
         )
 
+    run_preflight(args.examples)
+
     # Convert any SVG figures to PDF before LaTeX runs
     convert_svg_figures()
 
     assets = find_assets()
+    if args.examples:
+        print("\n- Building example content -")
+        example_table = prepare_examples()
+        assets.append(example_table)
 
     # Step 1-4: master PDF + global citation ordering
     if args.export_tables:
@@ -848,7 +835,7 @@ def main() -> None:
                 build_asset_svg(tex)
         elif assets:
             print("\n- Standalone assets are up to date; reusing existing exports -")
-    build_master()
+    build_master(args.examples)
 
     # Step 5: make citation numbers available to standalone asset builds
     previous_labels = (
@@ -861,11 +848,7 @@ def main() -> None:
         previous_labels != GLOBAL_LABELS.read_text(encoding="utf-8")
     )
 
-    # Step 6: optionally generate HTML citation companion
     html_out: Path | None = None
-    if args.html:
-        html_out = generate_citations_html()
-        print(f"  HTML : {html_out.relative_to(PRES_DIR)}")
 
     # Step 7: compile table assets and export SVGs (opt-in; slowest step)
     exported: list[Path] = []
@@ -876,7 +859,7 @@ def main() -> None:
             for tex in stale:
                 exported.append(build_asset_svg(tex))
             print("\n- Rebuilding master PDF with refreshed table assets -")
-            build_master()
+            build_master(args.examples)
         else:
             if assets:
                 print("\n- Standalone assets remain up to date -")
@@ -884,11 +867,15 @@ def main() -> None:
                 print("\nNo standalone assets found in assets/.")
     else:
         stale = _stale_assets(assets)
-        if stale or labels_changed:
+        if stale or (assets and labels_changed):
             print(
                 "\nWARNING: standalone table exports may be stale. "
                 "Run with --export_tables to refresh them."
             )
+
+    if args.html:
+        html_out = generate_citations_html(args.examples)
+        print(f"  HTML : {html_out.relative_to(PRES_DIR)}")
 
     # Summary
     print("\n" + "=" * 60)

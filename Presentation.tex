@@ -27,16 +27,35 @@
 
 \begin{document}
 
+\ifdefined\BuildExamples
+\input{examples/Example slide.tex}
+\fi
+
 % ── Slides (in presentation order) ──────────────────────────────────────────
 % Updated by sync_slide_order.py — do not edit this block manually.
-\setcounter{slide}{1}
-\input{slides/Example slide.tex}
+\setcounter{slide}{2}
+\input{slides/An unfilled protein sensing niche.tex}
+\setcounter{slide}{4}
+\input{slides/A modular de-novo nanopore protein sensing platform.tex}
+\setcounter{slide}{7}
+\input{slides/Nanopore Surface Coatings.tex}
+\setcounter{slide}{10}
+\input{slides/Polyurea.tex}
 % ── Bibliography ─────────────────────────────────────────────────────────────
+\ifnum\value{slide}=0
+\noindent No presentation slides yet. Add your slides or build with
+\texttt{--examples} to see the demonstration.
+\else
 \clearpage
 \listoffigures
 
 \clearpage
-\bibliographystyle{unsrtnat}
+\bibliographystyle{unsrtnat-firstauthor}
+\ifdefined\BuildExamples
+\bibliography{references,examples/references}
+\else
 \bibliography{references}
+\fi
+\fi
 
 \end{document}

@@ -3,4 +3,5 @@
 # README.md while preventing unreviewed major-version upgrades.
 matplotlib>=3.6,<4
 numpy>=1.23,<3
+openpyxl>=3.1,<4
 python-pptx>=0.6.21,<2
