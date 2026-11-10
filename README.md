@@ -58,6 +58,13 @@ The script updates the slide-input block in `Presentation.tex`; unmatched titles
 are reported and skipped. The default build creates a PDF in `build/`. Optional
 table exports go in `exported/`.
 
+## Regenerate the FTIR figure
+
+Edit the `assignment` values in
+`assets/figures/SID180c_TDICBAPMA_65nm_NoMeI_BaselineCorrected_FTIR_config.json`,
+then run `python generate_ftir_plot.py` from the repository root. The script
+regenerates the PNG and SVG in `assets/figures/`.
+
 ## Add your content
 
 1. Copy `slides/Example slide.tex` and rename the copy to match a slide title.

@@ -1,0 +1,90 @@
+{
+  "data_file": "SID180c 256 scans_01.dat",
+  "data_column": "SID180c_TDICBAPMA_65nm_NoMeI_BaselineCorrected",
+  "output_stem": "SID180c_TDICBAPMA_65nm_NoMeI_BaselineCorrected_FTIR",
+  "title": "SID180c_TDICBAPMA_65nm_NoMeI_BaselineCorrected",
+  "x_axis_label": "Wavenumber (cm$^{-1}$)",
+  "y_axis_label": "Absorbance (a.u.)",
+  "x_limits_cm-1": [4000, 650],
+  "y_limits": [-0.005, 0.115],
+  "omitted_range_cm-1": [1900, 2550],
+  "peak_search_window_cm-1": 8,
+  "trace_line_width": 1.0,
+  "peak_marker_size": 16,
+  "peak_number_offset": 0.004,
+  "leader_start_offset": 0.0008,
+  "leader_end_offset": 0.0005,
+  "peak_number_font_size": 10,
+  "assignment_font_size": 10,
+  "figure_size_inches": [16, 8],
+  "png_dpi": 240,
+  "font_family": "Arial",
+  "font_size": 14,
+  "title_font_size": 19,
+  "axis_label_font_size": 17,
+  "tick_font_size": 14,
+  "peaks": [
+    {
+      "label": "3290",
+      "wavenumber_cm-1": 3290,
+      "assignment": "Urea N-H",
+      "assignment_position_axes": [0.2, 0.94]
+    },
+    {
+      "label": "2921",
+      "wavenumber_cm-1": 2921,
+      "assignment": "CH2 asymmetric",
+      "assignment_position_axes": [0.29, 0.82]
+    },
+    {
+      "label": "2848",
+      "wavenumber_cm-1": 2848,
+      "assignment": "CH2 symmetric",
+      "assignment_position_axes": [0.4, 0.94]
+    },
+    {
+      "label": "2786",
+      "wavenumber_cm-1": 2786,
+      "assignment": "Bohlmann band",
+      "assignment_position_axes": [0.47, 0.82]
+    },
+    {
+      "label": "1653",
+      "wavenumber_cm-1": 1653,
+      "assignment": "Urea C=O",
+      "assignment_position_axes": [0.67, 0.94]
+    },
+    {
+      "label": "1596",
+      "wavenumber_cm-1": 1596,
+      "assignment": "Aromatic C=C",
+      "assignment_position_axes": [0.71, 0.82]
+    },
+    {
+      "label": "1559",
+      "wavenumber_cm-1": 1559,
+      "assignment": "Amide II",
+      "assignment_position_axes": [0.79, 0.94]
+    },
+    {
+      "label": "1457",
+      "wavenumber_cm-1": 1457,
+      "assignment": "CH2/CH3 bend",
+      "assignment_position_axes": [0.84, 0.82],
+      "number_wavenumber_offset_cm-1": 10
+    },
+    {
+      "label": "1437",
+      "wavenumber_cm-1": 1437,
+      "assignment": "Tentative CH2 bend",
+      "assignment_position_axes": [0.93, 0.94],
+      "number_wavenumber_offset_cm-1": -10
+    },
+    {
+      "label": "1246",
+      "wavenumber_cm-1": 1246,
+      "assignment": "Amide III",
+      "assignment_position_axes": [0.84, 0.7]
+    }
+  ]
+}
